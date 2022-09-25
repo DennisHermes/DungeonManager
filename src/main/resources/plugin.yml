@@ -1,0 +1,15 @@
+main: me.dannusnl.dungeonmanager.MainClass
+name: DonjonManager
+version: 1.0.0
+api-version: 1.16
+author: DannusNL
+description: DonjonManager!
+
+commands:
+  donjonjoint:
+    description: Open the dungeons menu.
+  donjonmanager:
+    description: setup the dungeon manager.
+    permission: dungeonmanager.manager
+  accepterrequete:
+    description: Accepts someones join request.
