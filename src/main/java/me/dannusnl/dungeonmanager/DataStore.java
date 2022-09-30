@@ -21,9 +21,13 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class DataManager {
+public class DataStore {
 
-	public static void setup() {
+	public DataStore() {
+
+	}
+
+	public void setup() {
 		if (!MainClass.getPlugin(MainClass.class).getDataFolder().exists()) MainClass.getPlugin(MainClass.class).getDataFolder().mkdir();
 		
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
@@ -40,11 +44,11 @@ public class DataManager {
 	
 	//==================================================================================================================================================//
 	
-	static Map<String, List<String>> games = new HashMap<>();
-	public static List<String> startedGames = new ArrayList<>();
-	public static Map<String, Player> request = new HashMap<>();
+	Map<String, List<String>> games = new HashMap<>();
+	public List<String> startedGames = new ArrayList<>();
+	public Map<String, Player> request = new HashMap<>();
 	
-	public static void createGame(Player p, String dungeon, int players) {
+	public void createGame(Player p, String dungeon, int players) {
 		List<String> dataList = new ArrayList<>();
 		dataList.add(dungeon);
 		dataList.add(players + "");
@@ -57,7 +61,7 @@ public class DataManager {
 		DungeonTeleporter.requestedDonjon.put(p, dungeon);
 	}
 	
-	public static void joinGame(Player p, String game) {
+	public void joinGame(Player p, String game) {
 		List<String> dataList = games.get(game);
 		String players = dataList.get(2) + "," + p.getName();
 		dataList.set(2, players);
@@ -66,7 +70,7 @@ public class DataManager {
 		DungeonTeleporter.requestedDonjon.put(p, DungeonTeleporter.requestedDonjon.get(Bukkit.getPlayer(dataList.get(2).split(",")[0])));
 	}
 	
-	public static void leaveGame(Player p, String game) {
+	public void leaveGame(Player p, String game) {
 		List<String> dataList = games.get(game);
 		String[] playersString = dataList.get(2).split(",");
 		List<String> playersList = new ArrayList<>(Arrays.asList(playersString));
@@ -84,24 +88,23 @@ public class DataManager {
 		}
 	}
 	
-	public static int getGamesRequiredPlayers(String game) {
+	public int getGamesRequiredPlayers(String game) {
 		return Integer.parseInt(games.get(game).get(1));
 	}
 	
-	public static List<String> getGames(int players, String dungeonName) {
+	public List<String> getGames() {
 		List<String> gamesAvailable = new ArrayList<>();
 		for (Map.Entry<String, List<String>> entry : games.entrySet()) {
-		    List<String> list = entry.getValue();
-		    if (list.get(0).equals(dungeonName) && list.get(1).equals(players + "")) gamesAvailable.add(entry.getKey().replace("AAA-", ""));
+		    gamesAvailable.add(entry.getKey().replace("AAA-", ""));
 		}
 		return gamesAvailable;
 	}
 	
-	public static String[] getPlayers(String game) {
+	public String[] getPlayers(String game) {
 		return games.get(game).get(2).split(",");
 	}
 	
-	public static String getGameOfPlayer(Player p) {
+	public String getGameOfPlayer(Player p) {
 		for (Map.Entry<String, List<String>> entry : games.entrySet()) {
 		    List<String> list = entry.getValue();
 		    if (list.get(2).contains(p.getName())) return entry.getKey();
@@ -109,14 +112,19 @@ public class DataManager {
 		return null;
 	}
 	
-	public static String getDungeonOfGame(String game) {
+	public String getDungeonOfGame(String game) {
 		List<String> dataList = games.get(game);
 		return dataList.get(0);
+	}
+
+	public Integer getPlayersOfGame(String game) {
+		List<String> dataList = games.get(game);
+		return Integer.parseInt(dataList.get(1));
 	}
 	
 	//==================================================================================================================================================//
 	
-	public static List<String> getDungeons() {
+	public List<String> getDungeons() {
 		File[] files = MainClass.getPlugin(MainClass.class).getDataFolder().listFiles();
 		List<String> worlds = new ArrayList<>();
 		for (File file : files) {
@@ -125,7 +133,7 @@ public class DataManager {
 		return worlds;
 	}
 	
-	public static World loadMap(File file) {
+	public World loadMap(File file) {
 		String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
         StringBuilder stringB = new StringBuilder();
         Random rnd = new Random();
@@ -135,13 +143,13 @@ public class DataManager {
         }
         String id = "AAA-" + stringB;
         
-        File dest = new File(MainClass.getPlugin(MainClass.class).getServer().getWorldContainer() + "/" + id);
+        File dest = new File(MainClass.getMainClass().getServer().getWorldContainer() + "/" + id);
         copyDirectory(file, dest);
 
 		return new WorldCreator(id).createWorld();
 	}
 	
-	public static void copyDirectory(File sourceLocation , File targetLocation) {
+	public void copyDirectory(File sourceLocation , File targetLocation) {
         if (sourceLocation.isDirectory()) {
             if (!targetLocation.exists()) {
                 targetLocation.mkdir();
@@ -170,13 +178,13 @@ public class DataManager {
         }
 	}
 	
-	public static void deleteWorld(World world) {
+	public void deleteWorld(World world) {
 		File worldFolder = world.getWorldFolder();
 		Bukkit.getServer().unloadWorld(world, false);
 		deleteDir(worldFolder);
 	}
 	
-	static void deleteDir(File file) {
+	public void deleteDir(File file) {
 	    File[] contents = file.listFiles();
 	    if (contents != null) {
 	        for (File f : contents) {
@@ -190,7 +198,7 @@ public class DataManager {
 	
 	//==================================================================================================================================================//
 	
-	public static void setWaitRoomLoc(Location loc) {
+	public void setWaitRoomLoc(Location loc) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -203,7 +211,7 @@ public class DataManager {
 		}
 	}
 	
-	public static void setStartRegion(Location loc1, Location loc2) {
+	public void setStartRegion(Location loc1, Location loc2) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -217,7 +225,7 @@ public class DataManager {
 		}
 	}
 	
-	public static boolean isInStartRegion(Location loc) {
+	public boolean isInStartRegion(Location loc) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -236,7 +244,7 @@ public class DataManager {
 		}
 	}
 	
-	public static boolean StartRegionIsSet() {
+	public boolean StartRegionIsSet() {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -245,14 +253,14 @@ public class DataManager {
 		return (loc1 != null && loc2 != null);
 	}
 	
-	public static Location getWaitRoomLoc() {
+	public Location getWaitRoomLoc() {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
 		return settings.getLocation("Waitingroom Location");
 	}
 	
-	public static void setMusic(ItemStack mat, String map) {
+	public void setMusic(ItemStack mat, String map) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -265,14 +273,14 @@ public class DataManager {
 		}
 	}
 	
-	public static ItemStack getMusic(String map) {
+	public ItemStack getMusic(String map) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
 		return settings.getItemStack("Music." + map);
 	}
 	
-	public static boolean isPlayableWith(String dungeon, String players) {
+	public boolean isPlayableWith(String dungeon, String players) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -284,7 +292,7 @@ public class DataManager {
 		}
 	}
 	
-	public static void addPlayableWith(String dungeon, String players) {
+	public void addPlayableWith(String dungeon, String players) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		
@@ -309,7 +317,7 @@ public class DataManager {
 		}
 	}
 	
-	public static void removePlayableWith(String dungeon, String players) {
+	public void removePlayableWith(String dungeon, String players) {
 		File settingsFile = new File(MainClass.getPlugin(MainClass.class).getDataFolder() + "/Settings.yml");
 		FileConfiguration settings = YamlConfiguration.loadConfiguration(settingsFile);
 		

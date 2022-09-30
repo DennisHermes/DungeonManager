@@ -1,11 +1,13 @@
 package me.dannusnl.dungeonmanager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.dannusnl.dungeonmanager.GUIHandlers.DonjonJoin;
-import me.dannusnl.dungeonmanager.GUIHandlers.DonjonManager;
-import me.dannusnl.dungeonmanager.GUIHandlers.SetMusique;
+import me.dannusnl.dungeonmanager.guihandlers.donjonjoin.MultiPlayer;
+import me.dannusnl.dungeonmanager.guihandlers.donjonjoin.SinglePlayer;
+import me.dannusnl.dungeonmanager.guihandlers.DonjonManager;
+import me.dannusnl.dungeonmanager.guihandlers.SetMusique;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -19,10 +21,22 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MainClass extends JavaPlugin {
-	
+
+	private static MainClass instance;
+
+	DataStore dataStore = new DataStore();
+	public DataStore getDataStore() {
+		return dataStore;
+	}
+
+	public static MainClass getMainClass() {
+		return instance;
+	}
+
 	@Override
 	public void onEnable() {
-		
+		instance = this;
+
 		getCommand("donjonjoint").setExecutor(this);
 		getCommand("donjonmanager").setExecutor(this);
 		getCommand("accepterrequete").setExecutor(this);
@@ -33,24 +47,25 @@ public class MainClass extends JavaPlugin {
 
 		getServer().getPluginManager().registerEvents(new DonjonManager(), this);
 		getServer().getPluginManager().registerEvents(new SetMusique(), this);
-		getServer().getPluginManager().registerEvents(new DonjonJoin(), this);
-		
-		if (!getDataFolder().exists()) DataManager.setup();
+		getServer().getPluginManager().registerEvents(new SinglePlayer(), this);
+		getServer().getPluginManager().registerEvents(new MultiPlayer(), this);
+
+		if (!getDataFolder().exists()) dataStore.setup();
 		
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
 			List<Player> checked = new ArrayList<>();
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				if (!DungeonTeleporter.starting.contains(p) && DungeonTeleporter.requestedWorlds.containsKey(p) && !checked.contains(p)) {
-					String game = DataManager.getGameOfPlayer(p);
+					String game = dataStore.getGameOfPlayer(p);
 					if (game != null) {
-						String[] players = DataManager.getPlayers(game);
-						int requiered = DataManager.getGamesRequiredPlayers(game);
+						String[] players = dataStore.getPlayers(game);
+						int requiered = dataStore.getGamesRequiredPlayers(game);
 						if (players.length == requiered) {
 							boolean ableToStart = true;
 							for (String player : players) {
 								Player foundPlayer = Bukkit.getPlayer(player);
 								checked.add(foundPlayer);
-								if (!DataManager.isInStartRegion(foundPlayer.getLocation())) ableToStart = false;
+								if (!dataStore.isInStartRegion(foundPlayer.getLocation())) ableToStart = false;
 							}
 							if (ableToStart) {
 								for (String player : players) {
@@ -58,22 +73,30 @@ public class MainClass extends JavaPlugin {
 								}
 							}
 						} else {
-							if (DataManager.isInStartRegion(p.getLocation())) p.sendTitle(ChatColor.RED + "Pas assez de joueurs", ChatColor.DARK_RED + "(" + players.length + "/" + requiered + ")", 1, 40, 1);
+							if (dataStore.isInStartRegion(p.getLocation())) p.sendTitle(ChatColor.GOLD + "⚠" + ChatColor.RED + " Pas assez de joueurs " + ChatColor.GOLD + "⚠", ChatColor.DARK_RED + "(" + players.length + "/" + requiered + ")", 1, 40, 1);
 						}
 					} else {
-						if (DataManager.isInStartRegion(p.getLocation())) DungeonTeleporter.StartSingleplayerCountdown(p);
+						if (dataStore.isInStartRegion(p.getLocation())) DungeonTeleporter.StartSingleplayerCountdown(p);
 					}
 				}
 			}
 		}, 20L, 20L);
 		
-		Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-			for (World world : Bukkit.getWorlds()) {
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+			List<String> blockedWorlds = new ArrayList<>();
+			for (World world : getServer().getWorlds()) {
 				if (world.getPlayers().isEmpty() && !DungeonTeleporter.requestedWorlds.containsValue(world) && world.getName().startsWith("AAA-")) {
-					DataManager.deleteWorld(world);
+					dataStore.deleteWorld(world);
+				} else {
+					blockedWorlds.add(world.getName());
 				}
 			}
-		}, 1200L, 200);
+			for (File file : getServer().getWorldContainer().listFiles()) {
+				if (file.getName().startsWith("AAA-")) {
+					if (!blockedWorlds.contains(file.getName())) dataStore.deleteDir(file);
+				}
+			}
+		}, 200L, 12000L);
 		
 	}
 	
@@ -86,13 +109,13 @@ public class MainClass extends JavaPlugin {
 		Player p = (Player) sender;
 	    
 		if (cmd.getName().equalsIgnoreCase("donjonjoint")) {
-			
-			if (DataManager.getWaitRoomLoc() == null) {
+
+			if (dataStore.getWaitRoomLoc() == null) {
 				p.sendMessage(ChatColor.RED + "Veuillez d'abord configurer l'emplacement de la salle d'attente avec: '/donjonmanager setwaitroom'.");
 				return false;
 			}
 			
-			if (!DataManager.StartRegionIsSet()) {
+			if (!dataStore.StartRegionIsSet()) {
 				p.sendMessage(ChatColor.RED + "Veuillez d'abord configurer l'emplacement de la salle d'attente avec: '/donjonmanager setstartregion'.");
 				return false;
 			}
@@ -132,8 +155,8 @@ public class MainClass extends JavaPlugin {
 		} else if (cmd.getName().equalsIgnoreCase("donjonmanager")) {
 			if (args.length >= 1) {
 				if (args[0].equalsIgnoreCase("setwaitroom")) {
-					
-					DataManager.setWaitRoomLoc(p.getLocation());
+
+					dataStore.setWaitRoomLoc(p.getLocation());
 					p.sendMessage(ChatColor.GREEN + "L'emplacement de la salle d'attente de téléportation est mis à jour avec votre emplacement actuel !");
 					
 				} else if (args[0].equalsIgnoreCase("setstartregion")) {
@@ -147,8 +170,8 @@ public class MainClass extends JavaPlugin {
 					p.sendMessage(ChatColor.BLUE + "Sélectionnez une zone en cliquant avec le bouton droit et le bouton gauche sur un bloc avec ce bâton.");
 					
 				} else if (args[0].equalsIgnoreCase("setplayeramount")) {
-					
-					DungeonManager.setplayeramount(p, 1);
+					DungeonManager dungeonManager = new DungeonManager();
+					dungeonManager.setplayeramount(p, 1);
 					
 				} else if (args[0].equalsIgnoreCase("setmusic")) {
 					if (p.getEquipment().getItemInMainHand() == null) {
@@ -160,7 +183,7 @@ public class MainClass extends JavaPlugin {
 						p.sendMessage(ChatColor.RED + "Veuillez tenir un disque de musique dans votre main.");
 						return false;
 					}
-					
+
 					ItemStack filling = new ItemStack(Material.CYAN_STAINED_GLASS_PANE);
 					ItemMeta fillingMeta = filling.getItemMeta();
 					fillingMeta.setDisplayName(" ");
@@ -178,7 +201,7 @@ public class MainClass extends JavaPlugin {
 					
 					int itemCount = 0;
 					List<ItemStack> items = new ArrayList<>();
-					List<String> dungeons = DataManager.getDungeons();
+					List<String> dungeons = dataStore.getDungeons();
 
 					for (String dungeon : dungeons) {
 						ItemStack item = new ItemStack(Material.CHISELED_STONE_BRICKS);
@@ -186,9 +209,9 @@ public class MainClass extends JavaPlugin {
 						itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', dungeon));
 						List<String> itemLore = new ArrayList<>();
 						itemLore.add(" ");
-						if (DataManager.getMusic(dungeon) == null) itemLore.add(ChatColor.RED + "Not set.");
+						if (dataStore.getMusic(dungeon) == null) itemLore.add(ChatColor.RED + "Not set.");
 						else
-							itemLore.add(ChatColor.DARK_AQUA + DataManager.getMusic(dungeon).getType().name().toLowerCase().replace('_', ' '));
+							itemLore.add(ChatColor.DARK_AQUA + dataStore.getMusic(dungeon).getType().name().toLowerCase().replace('_', ' '));
 						itemMeta.setLore(itemLore);
 						item.setItemMeta(itemMeta);
 						items.add(item);
@@ -223,19 +246,19 @@ public class MainClass extends JavaPlugin {
 			
 		} else if (cmd.getName().equalsIgnoreCase("accepterrequete")) {
 			
-			String game = DataManager.getGameOfPlayer(p);
+			String game = dataStore.getGameOfPlayer(p);
 			if (game != null) {
-				if (DataManager.request.containsKey(game)) {
-					for (String player : DataManager.getPlayers(game)) {
+				if (dataStore.request.containsKey(game)) {
+					for (String player : dataStore.getPlayers(game)) {
 						Bukkit.getPlayer(player).sendMessage(ChatColor.GREEN + "Demande acceptée ! Le joueur peut arriver à tout moment.");
 						
-						DataManager.request.get(game).teleport(p.getWorld().getSpawnLocation());
-						List<String> dataList = DataManager.games.get(game);
-						String players = dataList.get(2) + "," + DataManager.request.get(game);
+						dataStore.request.get(game).teleport(p.getWorld().getSpawnLocation());
+						List<String> dataList = dataStore.games.get(game);
+						String players = dataList.get(2) + "," + dataStore.request.get(game);
 						dataList.set(2, players);
-						DataManager.games.put(game, dataList);
+						dataStore.games.put(game, dataList);
 						
-						DataManager.request.remove(game);
+						dataStore.request.remove(game);
 					}
 				} else {
 					p.sendMessage(ChatColor.RED + "La demande n'est plus valable!");
@@ -248,7 +271,7 @@ public class MainClass extends JavaPlugin {
 		
 		return false;
 	}
-	
+
 }
 
 

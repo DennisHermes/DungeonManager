@@ -1,6 +1,6 @@
-package me.dannusnl.dungeonmanager.GUIHandlers;
+package me.dannusnl.dungeonmanager.guihandlers;
 
-import me.dannusnl.dungeonmanager.DataManager;
+import me.dannusnl.dungeonmanager.DataStore;
 import me.dannusnl.dungeonmanager.MainClass;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -20,7 +20,14 @@ public class SetMusique implements Listener {
 
     @EventHandler
     public void dungeonPlayers(InventoryClickEvent e) {
+
+        DataStore dataStore = MainClass.getMainClass().getDataStore();
+
         if (e.getView().getTitle().startsWith(ChatColor.DARK_AQUA + "Pour quel donjon?")) {
+            if (e.getClickedInventory() == null) return;
+            if (e.getClickedInventory().equals(e.getView().getBottomInventory())) return;
+            if (e.getCurrentItem() == null) return;
+
             e.setCancelled(true);
 
             if (e.getCurrentItem().getType().equals(Material.BARRIER)) {
@@ -55,7 +62,7 @@ public class SetMusique implements Listener {
 
                 int itemCount = 0;
                 List<ItemStack> items = new ArrayList<>();
-                List<String> dungeons = DataManager.getDungeons();
+                List<String> dungeons = dataStore.getDungeons();
 
                 for (int i = (newPage - 1) * 36; i < dungeons.size(); i++) {
                     ItemStack item = new ItemStack(Material.CHISELED_STONE_BRICKS);
@@ -63,8 +70,8 @@ public class SetMusique implements Listener {
                     itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', dungeons.get(i)));
                     List<String> itemLore = new ArrayList<>();
                     itemLore.add(" ");
-                    if (DataManager.getMusic(dungeons.get(i)) == null) itemLore.add(ChatColor.RED + "Not set.");
-                    else itemLore.add(ChatColor.DARK_AQUA + DataManager.getMusic(dungeons.get(i)).getType().name().toLowerCase().replace('_', ' '));
+                    if (dataStore.getMusic(dungeons.get(i)) == null) itemLore.add(ChatColor.RED + "Not set.");
+                    else itemLore.add(ChatColor.DARK_AQUA + dataStore.getMusic(dungeons.get(i)).getType().name().toLowerCase().replace('_', ' '));
                     itemMeta.setLore(itemLore);
                     item.setItemMeta(itemMeta);
                     items.add(item);
@@ -98,7 +105,7 @@ public class SetMusique implements Listener {
 
             } else if (e.getCurrentItem().getType().equals(Material.CHISELED_STONE_BRICKS)) {
 
-                DataManager.setMusic(e.getWhoClicked().getEquipment().getItemInMainHand(), e.getCurrentItem().getItemMeta().getDisplayName().replace('§', '&'));
+                dataStore.setMusic(e.getWhoClicked().getEquipment().getItemInMainHand(), e.getCurrentItem().getItemMeta().getDisplayName().replace('§', '&'));
                 e.getWhoClicked().closeInventory();
                 e.getWhoClicked().sendMessage(ChatColor.GREEN + "La musique a été ajoutée avec succès!");
 

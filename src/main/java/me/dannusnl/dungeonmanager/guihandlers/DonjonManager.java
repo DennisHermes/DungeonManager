@@ -1,6 +1,6 @@
-package me.dannusnl.dungeonmanager.GUIHandlers;
+package me.dannusnl.dungeonmanager.guihandlers;
 
-import me.dannusnl.dungeonmanager.DataManager;
+import me.dannusnl.dungeonmanager.DataStore;
 import me.dannusnl.dungeonmanager.DungeonManager;
 import me.dannusnl.dungeonmanager.MainClass;
 import org.bukkit.ChatColor;
@@ -15,7 +15,11 @@ public class DonjonManager implements Listener {
 
     @EventHandler
     public void dungeonPlayers(InventoryClickEvent e) {
-        if (e.getSlot() > e.getView().getTopInventory().getSize()) return;
+
+        DataStore dataStore = MainClass.getMainClass().getDataStore();
+
+        if (e.getClickedInventory() == null) return;
+        if (e.getClickedInventory().equals(e.getView().getBottomInventory())) return;
         if (e.getCurrentItem() == null) return;
 
         if (e.getView().getTitle().startsWith(ChatColor.DARK_AQUA + "DonjonManager: Donjons - Page ")) {
@@ -36,14 +40,16 @@ public class DonjonManager implements Listener {
                 int currentPage = Integer.parseInt(ChatColor.stripColor(e.getView().getTitle().replace("DonjonManager: Donjons - Page ", "")));
 
                 if (e.getCurrentItem().getType().equals(Material.GREEN_TERRACOTTA))
-                    DataManager.removePlayableWith(mapName, players + "");
+                    dataStore.removePlayableWith(mapName, players + "");
                 else
-                    DataManager.addPlayableWith(mapName, players + "");
+                    dataStore.addPlayableWith(mapName, players + "");
+
+                DungeonManager dungeonManager = new DungeonManager();
 
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        DungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage);
+                        dungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage);
                     }
                 }.runTaskLater(MainClass.getPlugin(MainClass.class), 1);
 
@@ -51,13 +57,15 @@ public class DonjonManager implements Listener {
 
                 int currentPage = Integer.parseInt(ChatColor.stripColor(e.getView().getTitle().replace("DonjonManager: Donjons - Page ", "")));
 
+                DungeonManager dungeonManager = new DungeonManager();
+
                 new BukkitRunnable() {
                     @Override
                     public void run() {
                         if (e.getCurrentItem().getItemMeta().getDisplayName().contains("Page suivante"))
-                            DungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage + 1);
+                            dungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage + 1);
                         else if (e.getCurrentItem().getItemMeta().getDisplayName().contains("Page précédent"))
-                            DungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage - 1);
+                            dungeonManager.setplayeramount((Player) e.getWhoClicked(), currentPage - 1);
                     }
                 }.runTaskLater(MainClass.getPlugin(MainClass.class), 1);
 

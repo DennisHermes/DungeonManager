@@ -13,8 +13,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class DungeonManager {
 
-	public static void setplayeramount(Player p, int page) {
-		
+	public DungeonManager() {
+
+	}
+
+	public void setplayeramount(Player p, int page) {
+
+		DataStore dataStore = MainClass.getMainClass().getDataStore();
+
 		Inventory inv = Bukkit.createInventory(null, 54, ChatColor.DARK_AQUA + "DonjonManager: Donjons - Page " + page);
 		
 		ItemStack filling = new ItemStack(Material.CYAN_STAINED_GLASS_PANE);
@@ -85,7 +91,7 @@ public class DungeonManager {
 			inv.setItem(i, filling);
 		}
 		
-		List<String> dungeons = DataManager.getDungeons();
+		List<String> dungeons = dataStore.getDungeons();
 		
 		if (dungeons.size() >=  (4 * (page - 1)) + 1) {
 			for (int i = 12; i < 16; i++) {
@@ -96,7 +102,7 @@ public class DungeonManager {
 				trueItem.setItemMeta(trueItemMeta);
 				falseItem.setItemMeta(falseItemMeta);
 				
-				if (DataManager.isPlayableWith(dungeons.get((4 * (page - 1))), playerCount + "")) inv.setItem(i, trueItem);
+				if (dataStore.isPlayableWith(dungeons.get((4 * (page - 1))), playerCount + "")) inv.setItem(i, trueItem);
 				else inv.setItem(i, falseItem);
 			}
 		}
@@ -110,7 +116,7 @@ public class DungeonManager {
 				trueItem.setItemMeta(trueItemMeta);
 				falseItem.setItemMeta(falseItemMeta);
 				
-				if (DataManager.isPlayableWith(dungeons.get((4 * (page - 1)) + 1), playerCount + "")) inv.setItem(i, trueItem);
+				if (dataStore.isPlayableWith(dungeons.get((4 * (page - 1)) + 1), playerCount + "")) inv.setItem(i, trueItem);
 				else inv.setItem(i, falseItem);
 			}
 		}
@@ -124,7 +130,7 @@ public class DungeonManager {
 				trueItem.setItemMeta(trueItemMeta);
 				falseItem.setItemMeta(falseItemMeta);
 				
-				if (DataManager.isPlayableWith(dungeons.get((4 * (page - 1)) + 2), playerCount + "")) inv.setItem(i, trueItem);
+				if (dataStore.isPlayableWith(dungeons.get((4 * (page - 1)) + 2), playerCount + "")) inv.setItem(i, trueItem);
 				else inv.setItem(i, falseItem);
 			}
 		}
@@ -138,7 +144,7 @@ public class DungeonManager {
 				trueItem.setItemMeta(trueItemMeta);
 				falseItem.setItemMeta(falseItemMeta);
 				
-				if (DataManager.isPlayableWith(dungeons.get((4 * (page - 1)) + 3), playerCount + "")) inv.setItem(i, trueItem);
+				if (dataStore.isPlayableWith(dungeons.get((4 * (page - 1)) + 3), playerCount + "")) inv.setItem(i, trueItem);
 				else inv.setItem(i, falseItem);
 			}
 		}

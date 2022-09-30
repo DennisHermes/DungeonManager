@@ -16,7 +16,7 @@ public class WaitingroomSelector implements Listener {
 
 	HashMap<Player, Location> pos1 = new HashMap<>();
 	HashMap<Player, Location> pos2 = new HashMap<>();
-	
+
 	@EventHandler
 	public void posSelection(PlayerInteractEvent e) {
 		if (e.getItem() == null) return;
@@ -34,7 +34,8 @@ public class WaitingroomSelector implements Listener {
 			}
 			
 			if (pos1.get(e.getPlayer()) != null && pos2.get(e.getPlayer()) != null) {
-				DataManager.setStartRegion(pos1.get(e.getPlayer()), pos2.get(e.getPlayer()));
+				DataStore dataStore = MainClass.getMainClass().getDataStore();
+				dataStore.setStartRegion(pos1.get(e.getPlayer()), pos2.get(e.getPlayer()));
 				pos1.put(e.getPlayer(), null);
 				pos2.put(e.getPlayer(), null);
 				e.getPlayer().getEquipment().setItemInMainHand(new ItemStack(Material.AIR));

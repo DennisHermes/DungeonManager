@@ -10,14 +10,15 @@ public class WorldManager implements Listener {
 
 	@EventHandler
     public void onWorldChange(PlayerChangedWorldEvent e) {
+		DataStore dataStore = MainClass.getMainClass().getDataStore();
 		World world = e.getFrom();
 		if (world.getPlayers().isEmpty() && !DungeonTeleporter.requestedWorlds.containsValue(world) && world.getName().startsWith("AAA-")) {
-			DataManager.deleteWorld(world);
-			DataManager.games.remove(DataManager.getGameOfPlayer(e.getPlayer()));
+			dataStore.deleteWorld(world);
+			dataStore.games.remove(dataStore.getGameOfPlayer(e.getPlayer()));
 		}
-		String game = DataManager.getGameOfPlayer(e.getPlayer());
+		String game = dataStore.getGameOfPlayer(e.getPlayer());
 		if (game != null) {
-			if (!e.getPlayer().getWorld().getName().contains(game)) DataManager.leaveGame(e.getPlayer(), game);
+			if (!e.getPlayer().getWorld().getName().contains(game)) dataStore.leaveGame(e.getPlayer(), game);
 		}
 		DungeonTeleporter.requestedWorlds.remove(e.getPlayer());
 	}
